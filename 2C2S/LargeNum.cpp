@@ -7,7 +7,7 @@
 #define MAX_BASE ((unsigned long long)1<<BASE_SIZE)
 
 using namespace std;
-typedef unsigned int BASE;
+typedef unsigned short BASE;
 typedef conditional<BASE_SIZE<32,conditional<BASE_SIZE<16,unsigned short, unsigned int >::type, unsigned long long>::type TMP; 
 
 
@@ -52,7 +52,11 @@ class LargeNum{
         LargeNum& operator /=(const BASE);
         LargeNum operator /(const LargeNum &);
         LargeNum& operator /=(const LargeNum &);
+
         BASE operator %(const BASE);
+        LargeNum& operator %=(const BASE);
+        LargeNum operator %(const LargeNum &);
+        LargeNum& operator %=(const LargeNum &);
         //friend ostream& operator << (ostream &, LargeNum&);
         //friend istream& operator >> (istream &, LargeNum&);
         void DecInput(const char *);
@@ -342,13 +346,14 @@ class LargeNum{
 
     LargeNum LargeNum::operator* (const LargeNum &LN){
         TMP tmp;
-        TMP k;
+        BASE k;
         LargeNum A(len+LN.len,0);
         for(int i=0;i<len;i++){
             k=0;
             for(int j=0;j<LN.len;j++){
                 tmp=(TMP)LN.coef[j]*coef[i]+A.coef[i+j]+k;
                 k=(tmp>>BASE_SIZE);
+                cout<<BASE_SIZE;
                 A.coef[i+j]=tmp;
             }
             A.coef[LN.len+i]+=k;
@@ -359,11 +364,11 @@ class LargeNum{
 
     LargeNum LargeNum::operator* (const BASE num){
         TMP tmp=0;
-        TMP k=0;
+        BASE k=0;
         LargeNum A(len+1,0);
         for(int i=0;i<len;i++){
             tmp=coef[i]*num+k;
-            k=(BASE)(tmp>>BASE_SIZE);
+            k=(tmp>>BASE_SIZE);
             A.coef[i]=(BASE)tmp;
         }
         A.coef[len]=k;
@@ -396,6 +401,20 @@ class LargeNum{
 
     LargeNum& LargeNum::operator/=(const BASE num){
         *this=*this/num;
+        return *this;
+    }
+    
+    BASE LargeNum::operator%(const BASE num){
+        TMP tmp,k=0;
+        for(int i=len-1;i>=0;i--){
+            tmp=(k<<BASE_SIZE)+coef[i];
+            k=tmp%num;
+        }
+        return k;
+    }
+
+    LargeNum& LargeNum::operator%=(const BASE num){
+        *this=*this%num;
         return *this;
     }
 
@@ -445,6 +464,45 @@ class LargeNum{
         return *this;
     }
 
+    LargeNum LargeNum::operator%(const LargeNum &LN){
+        LargeNum q(len-LN.len+1); 
+        LargeNum r(LN.len-1);
+        if(*this==LN){ r=0; return r;}
+        if(*this<LN){r=*this; return r;}
+        TMP b=MAX_BASE;
+        TMP d=b/(LN.coef[LN.len-1]+1);
+        LargeNum dU(*this);
+        LargeNum dV(LN);
+        dU=dU*d;
+        dV=dV*d;   
+        for(int j=len-LN.len;j>=0;j--){
+            BASE _j=j+LN.len;
+            TMP _q=((dU.coef[_j]*b+dU.coef[_j-1])/dV.coef[LN.len-1]);
+            TMP _r=((dU.coef[_j]*b+dU.coef[_j-1])%dV.coef[LN.len-1]);
+            if((_q==b)||((_q*dV.coef[LN.len-2])>(b*_r+dU.coef[_j-2]))){
+                _q--; _r=_r+dV.coef[LN.len-1];
+                if((_r<b)&&((_q==b)||(_q*dV.coef[LN.len-2]>b*_r+dU.coef[_j-2]))){
+                    _q--;
+                }
+            }
+            if(dU>=dV*_q){
+            dU.SubLN(dV*_q,j);
+            }   
+            else{
+                dU=dU.coef[LN.len+1]+1;
+                dU.AddLN(dV,j);
+            }
+        }
+        r=dU/d;
+        r.NormLen();
+        return r;
+    }
+
+    LargeNum& LargeNum::operator%=(const LargeNum &LN){
+        *this=*this/LN;
+        return *this;
+    }
+
     void LargeNum::DecInput(const char *S){
         TMP tmp=0;
         BASE k=0;
@@ -460,7 +518,6 @@ class LargeNum{
             char s=0;
             if((S[i]>='0')&&(S[i]<='9')) s=S[i]-'0';
             (*this*=10)+=s;
-            //cout<<coef[1]<<' '<<coef[0]<<'\n';
         }
         NormLen();
     }
@@ -480,18 +537,8 @@ class LargeNum{
         k--;
         for(;k>=0;k--) cout<<S[k];
         delete[]S;
-    }
+    }   
 
-    
-
-    BASE LargeNum::operator%(const BASE num){
-        TMP tmp,k=0;
-        for(int i=len-1;i>=0;i--){
-            tmp=(k<<BASE_SIZE)+coef[i];
-            k=tmp%num;
-        }
-        return k;
-    }
 
     void LargeNum::SubLN(const LargeNum &LN, int j){
         TMP tmp;
@@ -548,15 +595,22 @@ int main()
     LargeNum A(4,0);    
     LargeNum B(4,0);
     LargeNum C;
+    LargeNum R;
  
     //A.HexInput("7BFCE01DC4");
     //B.HexInput("FB1F2833");
-    A.DecInput("94324782358238523857239857239085723985");
-    BASE r=A%325;
+    A.DecInput("943247823582385238572398572390");
+    //BASE r=A%325;
     //A.PrintCoef();
-    B.DecInput("6436346346345786796087934534523");
+    B.DecInput("64363463463457867960");
     C=A/B;
+    R=A%B;
     //B.PrintCoef();
     C.DecOutput();
+    cout<<endl;
+    R.DecOutput();
+    //A.DecOutput();
+    //cout<<endl;
+    //B.DecOutput();
     
 }

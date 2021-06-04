@@ -8,7 +8,7 @@
 #define MAX_BASE ((unsigned long long)1<<BASE_SIZE)
 
 using namespace std;
-typedef unsigned short BASE;
+typedef unsigned int BASE;
 typedef conditional<BASE_SIZE<32,conditional<BASE_SIZE<16,unsigned short, unsigned int >::type, unsigned long long>::type TMP; 
 
 
@@ -377,7 +377,7 @@ class BigNum{
         BASE k=0;
         BigNum A(len+1,0);
         for(int i=0;i<len;i++){
-            tmp=coef[i]*num+k;
+            tmp=(TMP)coef[i]*(TMP)num+k;
             k=(tmp>>BASE_SIZE);
             A.coef[i]=(BASE)tmp;
         }
@@ -647,9 +647,13 @@ int main()
     }
     else cout<<"Successed"<<endl;
     cout<<"b = "<<b<<endl;*/
-    A.DecInput("99999532532124142");
-    B.DecInput("241124124152323");
+    A.DecInput("999995325351351353232124142");
+    B.DecInput("24112412415325235235232323");
     C=A/B;
+    A.DecOutput();
+    cout<<endl;
+    B.DecOutput();
+    cout<<endl;
     C.DecOutput();
     /*A.DecOutput();
     cout<<endl;

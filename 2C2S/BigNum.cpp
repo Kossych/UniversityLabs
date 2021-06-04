@@ -246,12 +246,12 @@ class BigNum{
         else {min=len; max=LN.len+1; MaxCoef=LN.coef;}
         BigNum A(max,0);
         for(int i=0;i<min;i++){
-            tmp=LN.coef[i]+coef[i]+k;
+            tmp=(TMP)LN.coef[i]+(TMP)coef[i]+k;
             A.coef[i]=(BASE)tmp;
             k=(bool)(tmp>>BASE_SIZE);
         }
         for(int i=min;i<max-1;i++){
-            tmp=MaxCoef[i]+k;
+            tmp=(TMP)MaxCoef[i]+k;
             A.coef[i]=(BASE)tmp;
             k=(bool)(tmp>>BASE_SIZE);
         }
@@ -266,7 +266,7 @@ class BigNum{
         int Len=maxLEN;
         if(len+1>maxLEN) Len=len+1;
         BigNum A(Len,0);
-        tmp=coef[0]+num+k;
+        tmp=(TMP)coef[0]+(TMP)num+k;
         k=(bool)(tmp>>BASE_SIZE);
         A.coef[0]=tmp;
         for(int i=1;i<len;i++){
@@ -362,7 +362,7 @@ class BigNum{
         for(int i=0;i<len;i++){
             k=0;
             for(int j=0;j<LN.len;j++){
-                tmp=(TMP)LN.coef[j]*coef[i]+A.coef[i+j]+k;
+                tmp=(TMP)LN.coef[j]*(TMP)coef[i]+A.coef[i+j]+k;
                 k=(tmp>>BASE_SIZE);
                 A.coef[i+j]=tmp;
             }
@@ -627,10 +627,9 @@ int main()
 {
     srand(time(0));
     BigNum A,B,C,D;
-    /*int M = 100;
-    int T = 10000;
+    int M = 100;
+    int T = 100;
     int n, m;
-    int b=0;
     do{ 
         n = rand()%M + 1;
         m = rand()%M + 1;
@@ -639,22 +638,23 @@ int main()
         A=_A; B=_B;
         C = A/B;
         D = A%B;
-        if(_A>_B) b++;
     }
     while((A == ((C*B) + D)) && ((A-D) == (C*B)) && (D < B) && (--T));
     if(T>0){
+        if(!(A == ((C*B) + D))) cout<<"Failed #1"<<endl;
+        if(!((A-D) == (C*B))) cout<<"Failed #2"<<endl;
+        if(!(D < B)) cout<<"Failed #3"<<endl;
         cout<<"Failed: T="<<T<<endl;
     }
     else cout<<"Successed"<<endl;
-    cout<<"b = "<<b<<endl;*/
-    A.DecInput("999995325351351353232124142");
+    /*A.DecInput("999995325351351353232124142");
     B.DecInput("24112412415325235235232323");
     C=A/B;
     A.DecOutput();
     cout<<endl;
     B.DecOutput();
     cout<<endl;
-    C.DecOutput();
+    C.DecOutput();*/
     /*A.DecOutput();
     cout<<endl;
     B.DecOutput();

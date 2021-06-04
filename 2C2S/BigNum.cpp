@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <type_traits> 
+#include <string>
 #define BASE_SIZE (sizeof(BASE)*8)
 #define MAX_BASE ((unsigned long long)1<<BASE_SIZE)
 
@@ -11,66 +12,68 @@ typedef unsigned short BASE;
 typedef conditional<BASE_SIZE<32,conditional<BASE_SIZE<16,unsigned short, unsigned int >::type, unsigned long long>::type TMP; 
 
 
-class LargeNum{
+class BigNum{
     public:
     BASE *coef;
     int maxLEN;
     int len;
     
-        LargeNum(int Len=1, bool k=0);
-        LargeNum(const LargeNum &);
-        ~LargeNum(){if(coef!=NULL) delete[]coef;}
-        LargeNum& operator = (const LargeNum &);
-        LargeNum& operator = (const BASE);
+        BigNum(int Len=1, bool k=0);
+        BigNum(const BigNum &);
+        ~BigNum(){delete[]coef; coef=NULL; len=0; maxLEN=0;}
+        BigNum& operator = (const BigNum &);
+        BigNum& operator = (const BASE);
 
         void HexInput(const char *);
         void HexOutput();
 
-        bool operator == (const LargeNum&);
-        bool operator != (const LargeNum&);
-        bool operator >= (const LargeNum&);
-        bool operator <= (const LargeNum&);
-        bool operator > (const LargeNum&);
-        bool operator < (const LargeNum&);
+        bool operator == (const BigNum&);
+        bool operator != (const BigNum&);
+        bool operator >= (const BigNum&);
+        bool operator <= (const BigNum&);
+        bool operator > (const BigNum&);
+        bool operator < (const BigNum&);
 
-        LargeNum operator + (const LargeNum &);
-        LargeNum& operator += (const LargeNum &);
-        LargeNum operator + (const BASE);
-        LargeNum& operator += (const BASE);
+        BigNum operator + (const BigNum &);
+        BigNum& operator += (const BigNum &);
+        BigNum operator + (const BASE);
+        BigNum& operator += (const BASE);
 
-        LargeNum operator - (const BASE);
-        LargeNum& operator -= (const BASE);
-        LargeNum operator - (const LargeNum &);
-        LargeNum& operator -= (const LargeNum &);
+        BigNum operator - (const BASE);
+        BigNum& operator -= (const BASE);
+        BigNum operator - (const BigNum &);
+        BigNum& operator -= (const BigNum &);
 
-        LargeNum operator * (const LargeNum &);
-        LargeNum& operator *= (const LargeNum &);
-        LargeNum operator * (const BASE);
-        LargeNum& operator *= (const BASE);
+        BigNum operator * (const BigNum &);
+        BigNum& operator *= (const BigNum &);
+        BigNum operator * (const BASE);
+        BigNum& operator *= (const BASE);
 
-        LargeNum operator /(const BASE);
-        LargeNum& operator /=(const BASE);
-        LargeNum operator /(const LargeNum &);
-        LargeNum& operator /=(const LargeNum &);
+        BigNum operator /(const BASE);
+        BigNum& operator /=(const BASE);
+        BigNum operator /(const BigNum &);
+        BigNum& operator /=(const BigNum &);
 
         BASE operator %(const BASE);
-        LargeNum& operator %=(const BASE);
-        LargeNum operator %(const LargeNum &);
-        LargeNum& operator %=(const LargeNum &);
+        BigNum& operator %=(const BASE);
+        BigNum operator %(const BigNum &);
+        BigNum& operator %=(const BigNum &);
+
         //friend ostream& operator << (ostream &, LargeNum&);
         //friend istream& operator >> (istream &, LargeNum&);
+
         void DecInput(const char *);
         void DecOutput();
         void PrintCoef();
     private:
         void ExpMaxLen(int);
         void NormLen();
-        void SubLN(const LargeNum&, int);
-        void AddLN(const LargeNum&, int);
+        int SubLN(const BigNum&, int);
+        void AddLN(const BigNum&, int);
 
 };
 
-    LargeNum::LargeNum(int Len, bool k){
+    BigNum::BigNum(int Len, bool k){
         maxLEN=Len;
         coef=new BASE[maxLEN];
         if(k==0){
@@ -90,7 +93,7 @@ class LargeNum{
 
     }
 
-    LargeNum::LargeNum(const LargeNum &LN){
+    BigNum::BigNum(const BigNum &LN){
         if(&LN!=this){
             maxLEN=LN.maxLEN;
             len=LN.len;
@@ -100,7 +103,7 @@ class LargeNum{
 
     }
     
-    LargeNum& LargeNum::operator = (const LargeNum &LN){
+    BigNum& BigNum::operator = (const BigNum &LN){
         if(&LN!=this){
             maxLEN=LN.maxLEN;
             len=LN.len;
@@ -112,14 +115,16 @@ class LargeNum{
         return *this;
     }
 
-    LargeNum& LargeNum::operator = (const BASE num){
+    BigNum& BigNum::operator = (const BASE num){
+        delete[]coef;
         len=1;
-        for(int i=1;i<maxLEN;i++) coef[i]=0;
+        maxLEN=len;
+        coef=new BASE[len];
         coef[0]=num;
         return *this;
     }
 
-    void LargeNum::HexInput(const char *S){
+    void BigNum::HexInput(const char *S){
         int BS=BASE_SIZE/4;
         int Slen=strlen(S);
         len=(Slen-1)/BS+1;
@@ -138,7 +143,7 @@ class LargeNum{
         this->NormLen();
     }
 
-    void LargeNum::HexOutput(){
+    void BigNum::HexOutput(){
         bool k=true;
         for(int i=len-1;i>=0;i--){
             for(int j=BASE_SIZE-4;j>=0;j=j-4){
@@ -158,7 +163,7 @@ class LargeNum{
         if(k) cout<<0;
     }
 
-    bool LargeNum::operator == (const LargeNum &LN){
+    bool BigNum::operator == (const BigNum &LN){
         if(&LN==this) return 1;
         if(len!=LN.len) return 0;
         int i=len-1;
@@ -169,7 +174,7 @@ class LargeNum{
         return true;
     }
 
-    bool LargeNum::operator != (const LargeNum &LN){
+    bool BigNum::operator != (const BigNum &LN){
         if(&LN==this) return 0;
         if(len!=LN.len) return 1;
         int i=len-1;
@@ -180,7 +185,7 @@ class LargeNum{
         return false;
     }
 
-    bool LargeNum::operator >= (const LargeNum &LN){
+    bool BigNum::operator >= (const BigNum &LN){
         if(&LN==this) return 1;
         if(len>LN.len) return 1;
         if(len<LN.len) return 0;
@@ -193,7 +198,7 @@ class LargeNum{
         return true;
     }
 
-    bool LargeNum::operator <= (const LargeNum &LN){
+    bool BigNum::operator <= (const BigNum &LN){
         if(&LN==this) return 1;
         if(len>LN.len) return 0;
         if(len<LN.len) return 1;
@@ -206,7 +211,7 @@ class LargeNum{
         return true;
     }
 
-    bool LargeNum::operator > (const LargeNum &LN){
+    bool BigNum::operator > (const BigNum &LN){
         if(&LN==this) return 0;
         if(len>LN.len) return 1;
         if(len<LN.len) return 0;
@@ -219,7 +224,7 @@ class LargeNum{
         return false;
     }
 
-    bool LargeNum::operator < (const LargeNum &LN){
+    bool BigNum::operator < (const BigNum &LN){
         if(&LN==this) return 0;
         if(len>LN.len) return 0;
         if(len<LN.len) return 1;
@@ -232,14 +237,14 @@ class LargeNum{
         return false;
     }
 
-    LargeNum LargeNum::operator+ (const LargeNum &LN){
+    BigNum BigNum::operator+ (const BigNum &LN){
         int min,max;
         BASE *MaxCoef;
         bool k=0;
         TMP tmp;
         if(len>LN.len) {min=LN.len; max=len+1; MaxCoef=coef;}
         else {min=len; max=LN.len+1; MaxCoef=LN.coef;}
-        LargeNum A(max,0);
+        BigNum A(max,0);
         for(int i=0;i<min;i++){
             tmp=LN.coef[i]+coef[i]+k;
             A.coef[i]=(BASE)tmp;
@@ -255,12 +260,12 @@ class LargeNum{
         return A;
     }
 
-    LargeNum LargeNum::operator+ (const BASE num){
+    BigNum BigNum::operator+ (const BASE num){
         TMP tmp=0;
         bool k=0;
         int Len=maxLEN;
         if(len+1>maxLEN) Len=len+1;
-        LargeNum A(Len,0);
+        BigNum A(Len,0);
         tmp=coef[0]+num+k;
         k=(bool)(tmp>>BASE_SIZE);
         A.coef[0]=tmp;
@@ -274,21 +279,23 @@ class LargeNum{
         return A;
     }
 
-    LargeNum& LargeNum::operator+= (const BASE num){
+    BigNum& BigNum::operator+= (const BASE num){
         *this=*this+num;
         return *this;
     }
 
-    LargeNum& LargeNum::operator+= (const LargeNum &LN){
+    BigNum& BigNum::operator+= (const BigNum &LN){
         *this=*this+LN;
         return *this;
     }
 
-    LargeNum LargeNum::operator - (const BASE num){
-        if(*this<num){cout<<"error\n"; return *this;}
+    BigNum BigNum::operator - (const BASE num){
+        if (*this < num) {
+        throw invalid_argument("first value should be bigger than second to subtract");
+        }
         TMP tmp;
         bool k=0;
-        LargeNum A(*this);
+        BigNum A(*this);
         tmp=A.coef[0]+MAX_BASE-num;
         A.coef[0]=(BASE)tmp;
         k=!((tmp)>>BASE_SIZE);
@@ -301,16 +308,18 @@ class LargeNum{
         return A;
     }
     
-    LargeNum& LargeNum::operator -= (const BASE num){
+    BigNum& BigNum::operator -= (const BASE num){
         *this=*this-num;
         return *this;
     }
 
-    LargeNum LargeNum::operator - (const LargeNum &LN){
-        if(*this<LN){cout<<"error\n"; return *this;}
+    BigNum BigNum::operator - (const BigNum &LN){
+        if (*this < LN) {
+        throw std::invalid_argument("first value should be bigger than second to subtract");
+        }
         TMP tmp;
         bool k=0;
-        LargeNum A(*this);
+        BigNum A(*this);
         for(int i=0;i<LN.len;i++){
             tmp=A.coef[i]+MAX_BASE-LN.coef[i]-k;
             A.coef[i]=(BASE)tmp;
@@ -325,8 +334,10 @@ class LargeNum{
         return A;
     }
 
-    LargeNum& LargeNum::operator -= (const LargeNum &LN){
-        if(*this<LN){cout<<"error\n"; return *this;}
+    BigNum& BigNum::operator -= (const BigNum &LN){
+        if (*this < LN) {
+        throw invalid_argument("first value should be bigger than second to subtract");
+        }
         int min;
         bool k=0;
         TMP tmp;
@@ -344,16 +355,15 @@ class LargeNum{
         return *this;
     }
 
-    LargeNum LargeNum::operator* (const LargeNum &LN){
+    BigNum BigNum::operator* (const BigNum &LN){
         TMP tmp;
         BASE k;
-        LargeNum A(len+LN.len,0);
+        BigNum A(len+LN.len,0);
         for(int i=0;i<len;i++){
             k=0;
             for(int j=0;j<LN.len;j++){
                 tmp=(TMP)LN.coef[j]*coef[i]+A.coef[i+j]+k;
                 k=(tmp>>BASE_SIZE);
-                cout<<BASE_SIZE;
                 A.coef[i+j]=tmp;
             }
             A.coef[LN.len+i]+=k;
@@ -362,10 +372,10 @@ class LargeNum{
         return A;
     }
 
-    LargeNum LargeNum::operator* (const BASE num){
+    BigNum BigNum::operator* (const BASE num){
         TMP tmp=0;
         BASE k=0;
-        LargeNum A(len+1,0);
+        BigNum A(len+1,0);
         for(int i=0;i<len;i++){
             tmp=coef[i]*num+k;
             k=(tmp>>BASE_SIZE);
@@ -376,20 +386,20 @@ class LargeNum{
         return A;
     }
 
-    LargeNum& LargeNum::operator*= (const BASE num){
+    BigNum& BigNum::operator*= (const BASE num){
         *this=*this*num;
         return *this;
     }
             
 
-    LargeNum& LargeNum::operator *= (const LargeNum &LN){
+    BigNum& BigNum::operator *= (const BigNum &LN){
         *this=*this*LN;
         return *this;
     }
 
-    LargeNum LargeNum::operator/(const BASE num){
+    BigNum BigNum::operator/(const BASE num){
         TMP tmp,k=0;
-        LargeNum A(len,0);
+        BigNum A(len,0);
         for(int i=len-1;i>=0;i--){
             tmp=(k<<BASE_SIZE)+coef[i];
             k=tmp%num;
@@ -399,12 +409,12 @@ class LargeNum{
         return A;
     }
 
-    LargeNum& LargeNum::operator/=(const BASE num){
+    BigNum& BigNum::operator/=(const BASE num){
         *this=*this/num;
         return *this;
     }
     
-    BASE LargeNum::operator%(const BASE num){
+    BASE BigNum::operator%(const BASE num){
         TMP tmp,k=0;
         for(int i=len-1;i>=0;i--){
             tmp=(k<<BASE_SIZE)+coef[i];
@@ -413,42 +423,53 @@ class LargeNum{
         return k;
     }
 
-    LargeNum& LargeNum::operator%=(const BASE num){
+    BigNum& BigNum::operator%=(const BASE num){
         *this=*this%num;
         return *this;
     }
 
-    LargeNum LargeNum::operator/(const LargeNum &LN){
-        LargeNum q(len-LN.len+1);   
-        if(*this==LN){ q=1; return q;}
-        if(*this<LN){q=0; return q;}
+    BigNum BigNum::operator/(const BigNum &LN){
+        if((LN.len==1)&&(LN.coef[0]!=0)){BigNum q=*this/LN.coef[0]; return q;}   
+        if((LN.len==1)&&(LN.coef[0]==0)){BigNum q=0; return q;}   
+        if(*this==LN){BigNum q=1; return q;}
+        if(*this<LN){BigNum q; return q;}
+        BigNum q(len-LN.len+1);
         TMP b=MAX_BASE;
         //D1
         TMP d=b/(LN.coef[LN.len-1]+1);
-        LargeNum dU(*this);
-        LargeNum dV(LN);
+        BigNum dU(*this);
+        BigNum dV(LN);
         dU=dU*d;
         dV=dV*d;   
+         if(len==dU.len){
+            if(dU.len==dU.maxLEN){
+                BigNum copy(dU);
+                delete[]dU.coef;
+                dU.coef=new BASE[dU.maxLEN+1];
+                for(int i=0;i<copy.len;i++) dU.coef[i]=copy.coef[i];
+                dU.maxLEN++;
+            }
+            dU.coef[len]=0;
+            dU.len=len+1;
+        }   
         //D2
         for(int j=len-LN.len;j>=0;j--){//D7(Цикл по j)
             //D3
             BASE _j=j+LN.len;
             TMP _q=((dU.coef[_j]*b+dU.coef[_j-1])/dV.coef[LN.len-1]);
             TMP _r=((dU.coef[_j]*b+dU.coef[_j-1])%dV.coef[LN.len-1]);
-            if((_q==b)||((_q*dV.coef[LN.len-2])>(b*_r+dU.coef[_j-2]))){
+            if((_q>=b)||(_q*dV.coef[LN.len-2])>(b*_r+dU.coef[_j-2])){
                 _q--; _r=_r+dV.coef[LN.len-1];
-                if((_r<b)&&((_q==b)||(_q*dV.coef[LN.len-2]>b*_r+dU.coef[_j-2]))){
-                    _q--;
+                if((_r<b)&&((_q>=b)||(_q*dV.coef[LN.len-2]>b*_r+dU.coef[_j-2]))){
+                    _q--; _r=_r+dV.coef[LN.len-1];
                 }
             }
             //D5
             q.coef[j]=_q;   
             //D4
-            if(dU>=dV*_q){
-            dU.SubLN(dV*_q,j);
-            }   
-            else{
-                dU=dU.coef[LN.len+1]+1;
+            BigNum _dV(dV*_q);
+            int k=dU.SubLN( dV*_q,j);
+            if(k){
                 //D6
                 q.coef[j]--;
                 dU.AddLN(dV,j);
@@ -459,22 +480,34 @@ class LargeNum{
         return q;
     }
 
-    LargeNum& LargeNum::operator/=(const LargeNum &LN){
+    BigNum& BigNum::operator/=(const BigNum &LN){
         *this=*this/LN;
         return *this;
     }
 
-    LargeNum LargeNum::operator%(const LargeNum &LN){
-        LargeNum q(len-LN.len+1); 
-        LargeNum r(LN.len-1);
-        if(*this==LN){ r=0; return r;}
-        if(*this<LN){r=*this; return r;}
+    BigNum BigNum::operator%(const BigNum &LN){
+        if((LN.len==1)&&(LN.coef[0]!=0)){BigNum q(1,0); q.coef[0]=*this%LN.coef[0]; return q;}   
+        if((LN.len==1)&&(LN.coef[0]==0)){throw invalid_argument("can't be divided by zero");}
+        if(*this==LN){BigNum r=0; return r;}
+        if(*this<LN){BigNum r(*this); return r;}
+        BigNum r(LN.len-1);
         TMP b=MAX_BASE;
         TMP d=b/(LN.coef[LN.len-1]+1);
-        LargeNum dU(*this);
-        LargeNum dV(LN);
+        BigNum dU(*this);
+        BigNum dV(LN);
         dU=dU*d;
-        dV=dV*d;   
+        dV=dV*d;
+        if(len==dU.len){
+            if(dU.len==dU.maxLEN){
+                BigNum copy(dU);
+                delete[]dU.coef;
+                dU.coef=new BASE[dU.maxLEN+1];
+                for(int i=0;i<copy.len;i++) dU.coef[i]=copy.coef[i];
+                dU.maxLEN++;
+            }
+            dU.coef[len]=0;
+            dU.len=len+1;
+        }   
         for(int j=len-LN.len;j>=0;j--){
             BASE _j=j+LN.len;
             TMP _q=((dU.coef[_j]*b+dU.coef[_j-1])/dV.coef[LN.len-1]);
@@ -485,11 +518,11 @@ class LargeNum{
                     _q--;
                 }
             }
-            if(dU>=dV*_q){
-            dU.SubLN(dV*_q,j);
-            }   
-            else{
-                dU=dU.coef[LN.len+1]+1;
+            BigNum _dV(dV*_q);
+            int k=dU.SubLN( dV*_q,j);
+            if(k){
+                //D6
+                //q.coef[j]--;
                 dU.AddLN(dV,j);
             }
         }
@@ -498,12 +531,12 @@ class LargeNum{
         return r;
     }
 
-    LargeNum& LargeNum::operator%=(const LargeNum &LN){
+    BigNum& BigNum::operator%=(const BigNum &LN){
         *this=*this/LN;
         return *this;
     }
 
-    void LargeNum::DecInput(const char *S){
+    void BigNum::DecInput(const char *S){
         TMP tmp=0;
         BASE k=0;
         int BS=BASE_SIZE/4;
@@ -522,8 +555,8 @@ class LargeNum{
         NormLen();
     }
 
-    void LargeNum::DecOutput(){
-        LargeNum A(*this);
+    void BigNum::DecOutput(){
+        BigNum A(*this);
         int SLen=len*10;
         int k=0;
         //unsigned char tmp;
@@ -540,7 +573,7 @@ class LargeNum{
     }   
 
 
-    void LargeNum::SubLN(const LargeNum &LN, int j){
+    int BigNum::SubLN(const BigNum &LN, int j){
         TMP tmp;
         bool k=0;
         for(int i=0;i<LN.len;i++){
@@ -554,10 +587,11 @@ class LargeNum{
             k=!((tmp)>>BASE_SIZE);
         }
         NormLen();
+        return k;
     }
 
 
-    void LargeNum::AddLN(const LargeNum &LN, int j){
+    void BigNum::AddLN(const BigNum &LN, int j){
         bool k=0;
         for(int i=0;i<LN.len-2  ;i++){
             TMP tmp=coef[i+j]+LN.coef[i]+k;
@@ -568,7 +602,7 @@ class LargeNum{
     }
 
 
-    void LargeNum::ExpMaxLen(int b){
+    void BigNum::ExpMaxLen(int b){
         maxLEN+=b;
         BASE *NewCoef=new BASE[maxLEN];
         for(int i=0;i<len;i++) NewCoef[i]=coef[i];
@@ -577,12 +611,12 @@ class LargeNum{
         coef=NewCoef;
     }
 
-    void LargeNum::NormLen(){
+    void BigNum::NormLen(){
         for(len=maxLEN;coef[len-1]==0&&len>0;len--);
         if(len==0) len=1;
     }
     
-    void LargeNum::PrintCoef(){
+    void BigNum::PrintCoef(){
         for(int i=len-1;i>=0;i--) cout<<coef[i];
         cout<<'\n';
                 for(int i=0;i<len;i++) cout<<coef[i];
@@ -592,25 +626,38 @@ class LargeNum{
 int main()
 {
     srand(time(0));
-    LargeNum A(4,0);    
-    LargeNum B(4,0);
-    LargeNum C;
-    LargeNum R;
- 
-    //A.HexInput("7BFCE01DC4");
-    //B.HexInput("FB1F2833");
-    A.DecInput("943247823582385238572398572390");
-    //BASE r=A%325;
-    //A.PrintCoef();
-    B.DecInput("64363463463457867960");
+    BigNum A,B,C,D;
+    /*int M = 100;
+    int T = 10000;
+    int n, m;
+    int b=0;
+    do{ 
+        n = rand()%M + 1;
+        m = rand()%M + 1;
+        BigNum _A(n,1); 
+        BigNum _B(m,1);
+        A=_A; B=_B;
+        C = A/B;
+        D = A%B;
+        if(_A>_B) b++;
+    }
+    while((A == ((C*B) + D)) && ((A-D) == (C*B)) && (D < B) && (--T));
+    if(T>0){
+        cout<<"Failed: T="<<T<<endl;
+    }
+    else cout<<"Successed"<<endl;
+    cout<<"b = "<<b<<endl;*/
+    A.DecInput("99999532532124142");
+    B.DecInput("241124124152323");
     C=A/B;
-    R=A%B;
-    //B.PrintCoef();
+    C.DecOutput();
+    /*A.DecOutput();
+    cout<<endl;
+    B.DecOutput();
+    cout<<endl;
     C.DecOutput();
     cout<<endl;
-    R.DecOutput();
-    //A.DecOutput();
-    //cout<<endl;
-    //B.DecOutput();
-    
+    D.DecOutput();
+    cout<<endl;
+    cout<<BASE_SIZE;*/
 }

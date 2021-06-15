@@ -4,11 +4,12 @@
 #include <string.h>
 #include <type_traits> 
 #include <string>
+#include <bitset>
 #define BASE_SIZE (sizeof(BASE)*8)
 #define MAX_BASE ((unsigned long long)1<<BASE_SIZE)
 
 using namespace std;
-typedef unsigned int BASE;
+typedef unsigned char BASE;
 typedef conditional<BASE_SIZE<32,conditional<BASE_SIZE<16,unsigned short, unsigned int >::type, unsigned long long>::type TMP; 
 
 
@@ -70,6 +71,7 @@ class BigNum{
         void NormLen();
         int SubLN(const BigNum&, int);
         void AddLN(const BigNum&, int);
+        BigNum DivBN(const BASE , int);
 
 };
 
@@ -138,6 +140,7 @@ class BigNum{
             if((S[i]>='0')&&(S[i]<='9')) tmp=S[i]-'0';
             else if((S[i]>='a')&&(S[i]<='f')) tmp=S[i]-'a'+10;
             else if((S[i]>='A')&&(S[i]<='F')) tmp=S[i]-'A'+10;
+            else continue;
             coef[iRev/BS]=coef[iRev/BS]|(tmp<<((iRev%BS)*4)); 
         }
         this->NormLen();
@@ -430,24 +433,20 @@ class BigNum{
 
     BigNum BigNum::operator/(const BigNum &LN){
         if((LN.len==1)&&(LN.coef[0]!=0)){BigNum q=*this/LN.coef[0]; return q;}   
-        if((LN.len==1)&&(LN.coef[0]==0)){BigNum q=0; return q;}   
-        if(*this==LN){BigNum q=1; return q;}
+        if((LN.len==1)&&(LN.coef[0]==0)){BigNum q(1,0); q.coef[0]=0; return q;}   
+        if(*this==LN){BigNum q(1,0); q.coef[0]=1; return q;}
         if(*this<LN){BigNum q; return q;}
         BigNum q(len-LN.len+1);
         TMP b=MAX_BASE;
         //D1
-        TMP d=b/(LN.coef[LN.len-1]+1);
+        TMP d=b/((TMP)LN.coef[LN.len-1]+1);
         BigNum dU(*this);
         BigNum dV(LN);
-        dU=dU*d;
-        dV=dV*d;   
+        dU*=d;
+        dV*=d;   
          if(len==dU.len){
             if(dU.len==dU.maxLEN){
-                BigNum copy(dU);
-                delete[]dU.coef;
-                dU.coef=new BASE[dU.maxLEN+1];
-                for(int i=0;i<copy.len;i++) dU.coef[i]=copy.coef[i];
-                dU.maxLEN++;
+                dU.ExpMaxLen(1);
             }
             dU.coef[len]=0;
             dU.len=len+1;
@@ -455,19 +454,19 @@ class BigNum{
         //D2
         for(int j=len-LN.len;j>=0;j--){//D7(Цикл по j)
             //D3
-            BASE _j=j+LN.len;
-            TMP _q=((dU.coef[_j]*b+dU.coef[_j-1])/dV.coef[LN.len-1]);
-            TMP _r=((dU.coef[_j]*b+dU.coef[_j-1])%dV.coef[LN.len-1]);
-            if((_q>=b)||(_q*dV.coef[LN.len-2])>(b*_r+dU.coef[_j-2])){
+            int _j=j+LN.len;
+            TMP ff=((TMP)dU.coef[_j]<<BASE_SIZE)+dU.coef[_j-1];
+            TMP _q=(ff/dV.coef[LN.len-1]);
+            TMP _r=(ff%dV.coef[LN.len-1]);
+            if((_q==b)||((_q*dV.coef[LN.len-2])>(b*_r+dU.coef[_j-2]))){
                 _q--; _r=_r+dV.coef[LN.len-1];
-                if((_r<b)&&((_q>=b)||(_q*dV.coef[LN.len-2]>b*_r+dU.coef[_j-2]))){
+                if((_r<b)&&((_q==b)||(_q*dV.coef[LN.len-2]>b*_r+dU.coef[_j-2]))){
                     _q--; _r=_r+dV.coef[LN.len-1];
                 }
             }
             //D5
             q.coef[j]=_q;   
             //D4
-            BigNum _dV(dV*_q);
             int k=dU.SubLN( dV*_q,j);
             if(k){
                 //D6
@@ -486,39 +485,35 @@ class BigNum{
     }
 
     BigNum BigNum::operator%(const BigNum &LN){
-        if((LN.len==1)&&(LN.coef[0]!=0)){BigNum q(1,0); q.coef[0]=*this%LN.coef[0]; return q;}   
-        if((LN.len==1)&&(LN.coef[0]==0)){throw invalid_argument("can't be divided by zero");}
-        if(*this==LN){BigNum r=0; return r;}
+        if((LN.len==1)&&(LN.coef[0]!=0)){BigNum r(1,0); r.coef[0]=*this%LN.coef[0]; return r;}   
+        if((LN.len==1)&&(LN.coef[0]==0)){BigNum r(*this); return r;}
+        if(*this==LN){BigNum r(1,0); return r;}
         if(*this<LN){BigNum r(*this); return r;}
         BigNum r(LN.len-1);
         TMP b=MAX_BASE;
-        TMP d=b/(LN.coef[LN.len-1]+1);
+        TMP d=b/((TMP)LN.coef[LN.len-1]+1);
         BigNum dU(*this);
         BigNum dV(LN);
-        dU=dU*d;
-        dV=dV*d;
+        dU*=d;
+        dV*=d;
         if(len==dU.len){
             if(dU.len==dU.maxLEN){
-                BigNum copy(dU);
-                delete[]dU.coef;
-                dU.coef=new BASE[dU.maxLEN+1];
-                for(int i=0;i<copy.len;i++) dU.coef[i]=copy.coef[i];
-                dU.maxLEN++;
+                dU.ExpMaxLen(1);
             }
             dU.coef[len]=0;
             dU.len=len+1;
         }   
         for(int j=len-LN.len;j>=0;j--){
-            BASE _j=j+LN.len;
-            TMP _q=((dU.coef[_j]*b+dU.coef[_j-1])/dV.coef[LN.len-1]);
-            TMP _r=((dU.coef[_j]*b+dU.coef[_j-1])%dV.coef[LN.len-1]);
+            int _j=j+LN.len;
+            TMP ff=((TMP)dU.coef[_j]<<BASE_SIZE)+dU.coef[_j-1];
+            TMP _q=(ff/dV.coef[LN.len-1]);
+            TMP _r=(ff%dV.coef[LN.len-1]);
             if((_q==b)||((_q*dV.coef[LN.len-2])>(b*_r+dU.coef[_j-2]))){
                 _q--; _r=_r+dV.coef[LN.len-1];
                 if((_r<b)&&((_q==b)||(_q*dV.coef[LN.len-2]>b*_r+dU.coef[_j-2]))){
-                    _q--;
+                    _q--; _r=_r+dV.coef[LN.len-1];
                 }
             }
-            BigNum _dV(dV*_q);
             int k=dU.SubLN( dV*_q,j);
             if(k){
                 //D6
@@ -526,13 +521,15 @@ class BigNum{
                 dU.AddLN(dV,j);
             }
         }
+        dU.len=LN.len;
         r=dU/d;
-        r.NormLen();
+        
+        //r.NormLen();
         return r;
     }
 
     BigNum& BigNum::operator%=(const BigNum &LN){
-        *this=*this/LN;
+        *this=*this%LN;
         return *this;
     }
 
@@ -550,12 +547,15 @@ class BigNum{
         for(int i=0;i<Slen;i++){
             char s=0;
             if((S[i]>='0')&&(S[i]<='9')) s=S[i]-'0';
+            else continue;
             (*this*=10)+=s;
         }
         NormLen();
     }
 
     void BigNum::DecOutput(){
+        if(len==1&&coef[0]==0) cout<<0;
+        else{
         BigNum A(*this);
         int SLen=len*10;
         int k=0;
@@ -570,6 +570,7 @@ class BigNum{
         k--;
         for(;k>=0;k--) cout<<S[k];
         delete[]S;
+        }
     }   
 
 
@@ -577,12 +578,14 @@ class BigNum{
         TMP tmp;
         bool k=0;
         for(int i=0;i<LN.len;i++){
-            tmp=coef[i+j]+MAX_BASE-LN.coef[i]-k;
+            //cout<<i+j<<" "<<len<<endl;
+            tmp=(TMP)coef[i+j]+MAX_BASE-LN.coef[i]-k;
             coef[i+j]=(BASE)tmp;
             k=!((tmp)>>BASE_SIZE);
         }
-        for(int i=LN.len;k&&i<=len;i++){
-            tmp=coef[i+j]+MAX_BASE-k;
+        for(int i=LN.len;k&&(i+j)<len;i++){
+            //cout<<i+j<<" "<<len<<endl;
+            tmp=(TMP)coef[i+j]+MAX_BASE-k;
             coef[i+j]=(BASE)tmp;
             k=!((tmp)>>BASE_SIZE);
         }
@@ -593,13 +596,32 @@ class BigNum{
 
     void BigNum::AddLN(const BigNum &LN, int j){
         bool k=0;
-        for(int i=0;i<LN.len-2  ;i++){
-            TMP tmp=coef[i+j]+LN.coef[i]+k;
+        for(int i=0;i<LN.len;i++){
+            TMP tmp=(TMP)coef[i+j]+LN.coef[i]+k;
             k=bool(tmp>>BASE_SIZE);
             coef[i+j]=tmp;
         }
-        NormLen();
+        for(int i=LN.len;k&&(i+j)<len;i++){
+            TMP tmp=(TMP)coef[i+j]+k;
+            k=bool(tmp>>BASE_SIZE);
+            coef[i+j]=tmp;
+        }
+        //NormLen();
     }
+
+    BigNum BigNum::DivBN(const BASE num, int j){
+        TMP tmp,k=0;
+        BigNum A(j+1,0);
+        for(int i=j;i>=0;i--){
+            tmp=(k<<BASE_SIZE)+coef[i];
+            k=tmp%num;
+            A.coef[i]=(tmp)/num;
+        }
+        A.NormLen();
+        return A;
+    }
+
+
 
 
     void BigNum::ExpMaxLen(int b){
@@ -617,18 +639,44 @@ class BigNum{
     }
     
     void BigNum::PrintCoef(){
-        for(int i=len-1;i>=0;i--) cout<<coef[i];
-        cout<<'\n';
-                for(int i=0;i<len;i++) cout<<coef[i];
+        for(int i=len-1;i>=0;i--) cout<<bitset<8>(coef[i])<<" ";
+        cout<<endl;
 
     }
 
 int main()
 {
     srand(time(0));
+    BigNum a(4, 1);
+    BigNum b(4, 1);
+    BigNum c(3, 1);
+    BigNum r;
+    //BigNum d(4, 1);
+    //BigNum e(3, 1);
+    /*a.DecInput("ffffffffffff");
+    b.DecInput("3123012391afba123123fffabc");
+    a.DecOutput();
+    cout<<endl;
+    b.DecOutput();*/
     BigNum A,B,C,D;
+    /*A.DecInput("1942639102760151127112018175129867903165646490149609316528852873075873262287291547085");
+    A.DecOutput();
+    cout<<endl;
+    B.DecInput("5172014117664208941109153793832655");
+    B.DecOutput();
+    cout<<endl;
+    C=A/B;
+    D=A%B;
+    
+    C.DecOutput();
+    cout<<endl;
+    D.DecOutput();
+    cout<<endl;
+    C.PrintCoef();
+    G.DecInput("375605916489162266346230558336292088568715033256988");
+    G.PrintCoef();*/
     int M = 100;
-    int T = 100;
+    int T = 100000;
     int n, m;
     do{ 
         n = rand()%M + 1;
@@ -636,15 +684,36 @@ int main()
         BigNum _A(n,1); 
         BigNum _B(m,1);
         A=_A; B=_B;
+        /*A.DecOutput();
+        cout<<endl;
+        B.DecOutput();
+        cout<<endl;*/
         C = A/B;
         D = A%B;
+        //cout<<"T : "<<T<<endl;
+
+        /*C.DecOutput();
+        cout<<endl;
+        D.DecOutput();
+        cout<<endl;
+        cout<<endl;*/
     }
     while((A == ((C*B) + D)) && ((A-D) == (C*B)) && (D < B) && (--T));
     if(T>0){
         if(!(A == ((C*B) + D))) cout<<"Failed #1"<<endl;
         if(!((A-D) == (C*B))) cout<<"Failed #2"<<endl;
         if(!(D < B)) cout<<"Failed #3"<<endl;
+       
         cout<<"Failed: T="<<T<<endl;
+        A.DecOutput();
+        cout<<endl;
+        B.DecOutput();
+        cout<<endl;
+        C.DecOutput();
+        cout<<endl;
+        D.DecOutput();
+        cout<<endl;
+        cout<<endl;
     }
     else cout<<"Successed"<<endl;
     /*A.DecInput("999995325351351353232124142");
